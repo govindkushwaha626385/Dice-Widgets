@@ -1,0 +1,60 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  font-family: "Outfit", "DM Sans", system-ui, sans-serif;
+  line-height: 1.45;
+  font-weight: 400;
+  color: #0f172a;
+  background-color: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --bg-gradient: linear-gradient(165deg, #fefce8 0%, #fef3c7 12%, #f1f5f9 35%, #e0f2fe 60%, #f8fafc 100%);
+  --bg-mesh: radial-gradient(at 25% 5%, rgba(251, 191, 36, 0.08) 0px, transparent 40%),
+    radial-gradient(at 85% 10%, rgba(99, 102, 241, 0.07) 0px, transparent 45%),
+    radial-gradient(at 10% 85%, rgba(34, 197, 94, 0.06) 0px, transparent 45%),
+    radial-gradient(at 75% 75%, rgba(244, 63, 94, 0.05) 0px, transparent 40%);
+  --widget-header-h: 2.25rem;
+  --content-padding: 0.75rem;
+  --section-spend: #b45309;
+  --section-travel: #0d9488;
+  --section-communicate: #2563eb;
+  --section-tools: #7c3aed;
+  --section-insights: #c026d3;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--bg-mesh), var(--bg-gradient);
+  background-attachment: fixed;
+  font-size: 14px;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Dense widget content: compact lists and text */
+.widget-content-dense {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.widget-content-dense .text-muted {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+/* Subtle noise overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}

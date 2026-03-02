@@ -1,0 +1,52 @@
+# Dependencies – ignore all node_modules folders (root and nested)
+node_modules/
+**/node_modules/
+
+# Environment – ignore all .env files (root and nested)
+.env
+.env.*
+!.env.example
+
+# Dice auth state (session/cookies – sensitive)
+**/dice-auth-state.json
+
+# Build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Vite
+.vite/
+
+# Cache
+.wwebjs_cache/
+.cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Electron packaging
+release/
+*.dmg
+*.exe
+*.AppImage
+
+# Optional: keep .env.example so others know required vars
+# (do not add .env.example to gitignore)

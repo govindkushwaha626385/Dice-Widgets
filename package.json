@@ -1,0 +1,13 @@
+{
+  "name": "dice-widgets-with-agents",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root workspace – run scripts from widgets_with_agents",
+  "scripts": {
+    "build": "cd widgets_with_agents && npm run build",
+    "electron:dev": "cd widgets_with_agents && npm run electron:dev",
+    "dev:frontend": "cd widgets_with_agents && npm run dev:frontend",
+    "dev:backend": "cd widgets_with_agents && npm run dev:backend",
+    "start": "cd widgets_with_agents && npm run start"
+  }
+}
