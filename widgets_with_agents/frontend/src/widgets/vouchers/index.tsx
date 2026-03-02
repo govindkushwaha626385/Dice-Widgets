@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
 import { Modal } from "../../components/Modal";
-import { apiFetch } from "../../lib/electronApi";
+import { apiFetch, notify } from "../../lib/electronApi";
 import type { ScrapedVoucherItem, ScrapedVoucherDetail } from "./types";
 
 const VOUCHERS_LIST_URL = "/api/widgets/vouchers";
@@ -42,6 +42,10 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
   const [detail, setDetail] = useState<ScrapedVoucherDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [declineModalId, setDeclineModalId] = useState<string | null>(null);
+  const [declineRemark, setDeclineRemark] = useState("");
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
@@ -67,6 +71,18 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
     fetchList();
   }, [fetchList]);
 
+  useEffect(() => {
+    if (!actionSuccess) return;
+    const t = setTimeout(() => setActionSuccess(null), 4000);
+    return () => clearTimeout(t);
+  }, [actionSuccess]);
+
+  useEffect(() => {
+    if (!actionError) return;
+    const t = setTimeout(() => setActionError(null), 8000);
+    return () => clearTimeout(t);
+  }, [actionError]);
+
   const openDetail = useCallback(async (id: string) => {
     setDetailId(id);
     setDetail(null);
@@ -89,38 +105,77 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
   }, []);
 
   const handleApprove = useCallback(async (id: string) => {
+    const confirmed = window.confirm("Are you sure you want to approve this voucher?");
+    if (!confirmed) return;
     setActionLoading(id);
+    setActionSuccess(null);
+    setActionError(null);
     try {
       const res = await apiFetch(getVoucherApproveUrl(id), { method: "POST" });
       const data = (await res.json()) as { success?: boolean; message?: string };
-      if (data.success !== false) {
+      if (res.ok && data.success !== false) {
+        notify("Voucher", "Successfully approved.");
+        setActionSuccess("Successfully approved.");
+        setActionError(null);
         await fetchList();
         if (detailId === id) {
           const dRes = await apiFetch(getVoucherDetailUrl(id));
           if (dRes.ok) setDetail((await dRes.json()) as ScrapedVoucherDetail);
         }
+      } else {
+        setActionError(data?.message ?? "Approve failed.");
       }
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Approve failed.");
     } finally {
       setActionLoading(null);
     }
   }, [detailId, fetchList]);
 
-  const handleDecline = useCallback(async (id: string) => {
+  const openDeclineModal = useCallback((id: string) => {
+    setDeclineModalId(id);
+    setDeclineRemark("");
+  }, []);
+
+  const closeDeclineModal = useCallback(() => {
+    setDeclineModalId(null);
+    setDeclineRemark("");
+    setActionError(null);
+  }, []);
+
+  const handleDeclineSubmit = useCallback(async () => {
+    const id = declineModalId;
+    if (!id) return;
     setActionLoading(id);
+    setActionSuccess(null);
+    setActionError(null);
     try {
-      const res = await apiFetch(getVoucherDeclineUrl(id), { method: "POST" });
+      const res = await apiFetch(getVoucherDeclineUrl(id), {
+        method: "POST",
+        body: JSON.stringify({ remarks: declineRemark }),
+      });
       const data = (await res.json()) as { success?: boolean; message?: string };
-      if (data.success !== false) {
+      if (res.ok && data.success !== false) {
+        notify("Voucher", "Successfully declined.");
+        setActionSuccess("Successfully declined.");
+        setActionError(null);
+        closeDeclineModal();
         await fetchList();
-        if (detailId === id) {
-          const dRes = await apiFetch(getVoucherDetailUrl(id));
-          if (dRes.ok) setDetail((await dRes.json()) as ScrapedVoucherDetail);
-        }
+        if (detailId === id) closeDetail();
+      } else {
+        setActionError(data?.message ?? "Decline failed.");
       }
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Decline failed.");
     } finally {
       setActionLoading(null);
     }
-  }, [detailId, fetchList]);
+  }, [declineModalId, declineRemark, detailId, fetchList, closeDeclineModal, closeDetail]);
+
+  const handleDecline = useCallback(
+    (id: string) => openDeclineModal(id),
+    [openDeclineModal]
+  );
 
   const preview = items.slice(0, maximized ? undefined : WIDGET_PREVIEW_COUNT);
 
@@ -206,6 +261,16 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
             </table>
           </div>
         )}
+      {actionSuccess && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-green-600 text-white px-4 py-2 text-sm font-medium shadow-lg">
+          {actionSuccess}
+        </div>
+      )}
+      {actionError && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-red-600 text-white px-4 py-2 text-sm font-medium shadow-lg max-w-md text-center">
+          {actionError}
+        </div>
+      )}
         <Modal open={detailId != null} onClose={closeDetail} title={detail?.id ?? "Voucher details"}>
           <VoucherDetailContent
             detailLoading={detailLoading}
@@ -214,11 +279,23 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
             onApprove={detailId ? () => handleApprove(detailId) : undefined}
             onDecline={detailId ? () => handleDecline(detailId) : undefined}
             actionLoading={actionLoading === detailId}
+            actionSuccess={actionSuccess}
+            actionError={actionError}
           />
         </Modal>
-      </div>
-    );
-  }
+      <Modal open={declineModalId != null} onClose={closeDeclineModal} title="Decline voucher">
+        <DeclineRemarkForm
+          actionError={actionError}
+          remark={declineRemark}
+          onRemarkChange={setDeclineRemark}
+          onSubmit={handleDeclineSubmit}
+          onCancel={closeDeclineModal}
+          loading={!!(declineModalId && actionLoading === declineModalId)}
+        />
+      </Modal>
+    </div>
+  );
+}
 
   return (
     <>
@@ -273,6 +350,16 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
           </ul>
         )}
       </WidgetWrapper>
+      {actionSuccess && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-green-600 text-white px-4 py-2 text-sm font-medium shadow-lg">
+          {actionSuccess}
+        </div>
+      )}
+      {actionError && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-red-600 text-white px-4 py-2 text-sm font-medium shadow-lg max-w-md text-center">
+          {actionError}
+        </div>
+      )}
       <Modal open={detailId != null} onClose={closeDetail} title={detail?.id ?? "Voucher details"}>
         <VoucherDetailContent
           detailLoading={detailLoading}
@@ -281,9 +368,74 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
           onApprove={detailId ? () => handleApprove(detailId) : undefined}
           onDecline={detailId ? () => handleDecline(detailId) : undefined}
           actionLoading={detailId ? actionLoading === detailId : false}
+          actionSuccess={actionSuccess}
+          actionError={actionError}
+        />
+      </Modal>
+      <Modal open={declineModalId != null} onClose={closeDeclineModal} title="Decline voucher">
+        <DeclineRemarkForm
+          remark={declineRemark}
+          onRemarkChange={setDeclineRemark}
+          onSubmit={handleDeclineSubmit}
+          onCancel={closeDeclineModal}
+          loading={!!(declineModalId && actionLoading === declineModalId)}
+          actionError={actionError}
         />
       </Modal>
     </>
+  );
+}
+
+function DeclineRemarkForm({
+  remark,
+  onRemarkChange,
+  onSubmit,
+  onCancel,
+  loading,
+  actionError,
+}: {
+  remark: string;
+  onRemarkChange: (v: string) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  loading: boolean;
+  actionError?: string | null;
+}) {
+  return (
+    <div className="space-y-4">
+      {actionError && (
+        <div className="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm">
+          {actionError}
+        </div>
+      )}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Remark</label>
+        <textarea
+          value={remark}
+          onChange={(e) => onRemarkChange(e.target.value)}
+          placeholder="Enter reason for decline..."
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm min-h-[80px]"
+          rows={3}
+        />
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={loading}
+          className="rounded-lg bg-red-600 text-white px-4 py-2 font-medium hover:bg-red-700 disabled:opacity-50"
+        >
+          {loading ? "Declining…" : "Decline"}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -294,6 +446,8 @@ function VoucherDetailContent({
   onApprove,
   onDecline,
   actionLoading,
+  actionSuccess,
+  actionError,
 }: {
   detailLoading: boolean;
   detail: ScrapedVoucherDetail | null;
@@ -301,6 +455,8 @@ function VoucherDetailContent({
   onApprove?: () => void;
   onDecline?: () => void;
   actionLoading: boolean;
+  actionSuccess?: string | null;
+  actionError?: string | null;
 }) {
   if (detailLoading) {
     return <p className="text-muted">Loading…</p>;
@@ -310,6 +466,16 @@ function VoucherDetailContent({
   }
   return (
     <div className="space-y-4 text-sm">
+      {actionSuccess && (
+        <div className="rounded-lg bg-green-50 border border-green-200 text-green-800 px-3 py-2 text-sm font-medium">
+          {actionSuccess}
+        </div>
+      )}
+      {actionError && (
+        <div className="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm">
+          {actionError}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
         {onApprove && (
           <button

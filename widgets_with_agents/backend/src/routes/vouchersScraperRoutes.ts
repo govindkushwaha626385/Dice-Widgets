@@ -1,10 +1,6 @@
 import { Router, type Request, type Response } from "express";
-import {
-  runVouchersListScraper,
-  runVoucherDetailScraper,
-  runVoucherApprove,
-  runVoucherDecline,
-} from "../scrapers/vouchers/index.js";
+import { runVouchersListScraper, runVoucherDetailScraper } from "../scrapers/vouchers/index.js";
+import { heimdallApprove, heimdallDecline } from "../services/heimdallVoucherApi.js";
 import { getDiceAuthStatePath } from "../config/diceAuthPath.js";
 
 export const vouchersScraperRoutes = Router();
@@ -58,15 +54,17 @@ vouchersScraperRoutes.post("/widgets/vouchers/:id/approve", async (req: Request,
     return;
   }
   try {
-    const result = await runVoucherApprove(id);
+    const result = await heimdallApprove(id);
     if (!result.success) {
+      console.error("Voucher approve API error:", result.message);
       res.status(400).json({ success: false, message: result.message ?? "Approve failed" });
       return;
     }
     res.json({ success: true });
   } catch (err) {
     console.error("Voucher approve error:", err);
-    res.status(500).json({ success: false, message: "Failed to approve voucher" });
+    const message = err instanceof Error ? err.message : "Failed to approve voucher";
+    res.status(500).json({ success: false, message });
   }
 });
 
@@ -76,15 +74,18 @@ vouchersScraperRoutes.post("/widgets/vouchers/:id/decline", async (req: Request,
     res.status(400).json({ error: "Voucher ID required" });
     return;
   }
+  const remarks = typeof req.body?.remarks === "string" ? req.body.remarks : "";
   try {
-    const result = await runVoucherDecline(id);
+    const result = await heimdallDecline(id, remarks);
     if (!result.success) {
+      console.error("Voucher decline API error:", result.message);
       res.status(400).json({ success: false, message: result.message ?? "Decline failed" });
       return;
     }
     res.json({ success: true });
   } catch (err) {
     console.error("Voucher decline error:", err);
-    res.status(500).json({ success: false, message: "Failed to decline voucher" });
+    const message = err instanceof Error ? err.message : "Failed to decline voucher";
+    res.status(500).json({ success: false, message });
   }
 });
