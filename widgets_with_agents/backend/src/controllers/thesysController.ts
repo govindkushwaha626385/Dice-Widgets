@@ -12,7 +12,7 @@ const ANALYSIS_SYSTEM_PROMPT = `You are an analyst for a Personal Assistant dash
 
 Data sources:
 - expenses: from the transaction UI (id, service, amount, transactionDate, submissionDate, createdBy, type)
-- vouchers, trips, purchase_requisitions, notes, products: from the database (when configured)
+- vouchers, trips, purchase_requisitions, notes: from the database (when configured)
 
 Your task is to analyze this data and present insights using the C1 DSL with:
 1. Summary cards: totals (e.g. total expense amount, voucher count, trip count, PR count), key numbers.
@@ -23,7 +23,7 @@ Your task is to analyze this data and present insights using the C1 DSL with:
    Use the chart DSL (e.g. type "chart", variant "bar" | "line" | "pie", data with labels and values).
 4. Short bullet points for notable patterns or recommendations.
 
-Cover: Expenses (spending, by service/type, dates), Vouchers (totals, status), Trips (count, dates, status), Purchase Requisitions (status breakdown), and Notes/Products if present. Be concise and visual.`;
+Cover: Expenses (spending, by service/type, dates), Vouchers (totals, status), Trips (count, dates, status), Purchase Requisitions (status breakdown), and Notes if present. Be concise and visual.`;
 
 export function isThesysConfigured(): boolean {
   return !!thesysApiKey;
@@ -99,21 +99,18 @@ export async function postAnalysis(req: Request, res: Response): Promise<void> {
     let vouchers: { data: unknown[] | null } = { data: [] };
     let prs: { data: unknown[] | null } = { data: [] };
     let notes: { data: unknown[] | null } = { data: [] };
-    let products: { data: unknown[] | null } = { data: [] };
 
     if (isSupabaseConfigured() && supabaseAdmin) {
-      const [tripsR, vouchersR, prsR, notesR, productsR] = await Promise.all([
+      const [tripsR, vouchersR, prsR, notesR] = await Promise.all([
         supabaseAdmin.from("trips").select("*").eq("user_id", userId).order("start_date", { ascending: false }),
         supabaseAdmin.from("vouchers").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
         supabaseAdmin.from("purchase_requisitions").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
         supabaseAdmin.from("notes").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
-        supabaseAdmin.from("products").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
       ]);
       trips = tripsR;
       vouchers = vouchersR;
       prs = prsR;
       notes = notesR;
-      products = productsR;
     }
 
     const dataSummary = {
@@ -122,7 +119,6 @@ export async function postAnalysis(req: Request, res: Response): Promise<void> {
       vouchers: vouchers.data ?? [],
       purchase_requisitions: prs.data ?? [],
       notes: notes.data ?? [],
-      products: products.data ?? [],
     };
 
     const client = new OpenAI({ apiKey: thesysApiKey, baseURL: THESYS_BASE });

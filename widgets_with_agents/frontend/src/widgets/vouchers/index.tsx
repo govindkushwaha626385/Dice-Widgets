@@ -1,36 +1,27 @@
 /**
- * Vouchers widget: list scraped from Dice expense vouchers page; actions: Approve, Decline, View.
- * Detail modal shows voucher details, employee details, timeline, and Approve/Decline.
+ * Vouchers widget: list from scraper; actions Approve, Decline, View.
+ * Approve/Decline call backend → Heimdall API. Detail modal shows full voucher + timeline.
  */
+
 import { useState, useEffect, useCallback } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
 import { Modal } from "../../components/Modal";
 import { apiFetch, notify } from "../../lib/electronApi";
 import type { ScrapedVoucherItem, ScrapedVoucherDetail } from "./types";
 
-const VOUCHERS_LIST_URL = "/api/widgets/vouchers";
-const WIDGET_PREVIEW_COUNT = 3;
+// API paths (backend routes under /api)
+const API_BASE = "/api/widgets/vouchers";
+const PREVIEW_COUNT = 3;
+
+const getListUrl = () => API_BASE;
+const getDetailUrl = (id: string) => `${API_BASE}/${encodeURIComponent(id)}`;
+const getApproveUrl = (id: string) => `${API_BASE}/${encodeURIComponent(id)}/approve`;
+const getDeclineUrl = (id: string) => `${API_BASE}/${encodeURIComponent(id)}/decline`;
 
 interface VouchersWidgetProps {
   maximized?: boolean;
   onMinimize?: () => void;
   onMaximize?: () => void;
-}
-
-function getVouchersUrl(): string {
-  return VOUCHERS_LIST_URL;
-}
-
-function getVoucherDetailUrl(id: string): string {
-  return `${VOUCHERS_LIST_URL}/${encodeURIComponent(id)}`;
-}
-
-function getVoucherApproveUrl(id: string): string {
-  return `${VOUCHERS_LIST_URL}/${encodeURIComponent(id)}/approve`;
-}
-
-function getVoucherDeclineUrl(id: string): string {
-  return `${VOUCHERS_LIST_URL}/${encodeURIComponent(id)}/decline`;
 }
 
 export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWidgetProps) {
@@ -52,7 +43,7 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
     setError(null);
     setHint(null);
     try {
-      const res = await apiFetch(getVouchersUrl());
+      const res = await apiFetch(getListUrl());
       if (!res.ok) throw new Error("Failed to fetch vouchers");
       const data = (await res.json()) as { items?: ScrapedVoucherItem[]; hint?: string } | ScrapedVoucherItem[];
       const list = Array.isArray(data) ? data : (data?.items ?? []);
@@ -88,7 +79,7 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
     setDetail(null);
     setDetailLoading(true);
     try {
-      const res = await apiFetch(getVoucherDetailUrl(id));
+      const res = await apiFetch(getDetailUrl(id));
       if (!res.ok) throw new Error("Failed to fetch detail");
       const data = (await res.json()) as ScrapedVoucherDetail;
       setDetail(data);
@@ -111,7 +102,7 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
     setActionSuccess(null);
     setActionError(null);
     try {
-      const res = await apiFetch(getVoucherApproveUrl(id), { method: "POST" });
+      const res = await apiFetch(getApproveUrl(id), { method: "POST" });
       const data = (await res.json()) as { success?: boolean; message?: string };
       if (res.ok && data.success !== false) {
         notify("Voucher", "Successfully approved.");
@@ -119,7 +110,7 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
         setActionError(null);
         await fetchList();
         if (detailId === id) {
-          const dRes = await apiFetch(getVoucherDetailUrl(id));
+          const dRes = await apiFetch(getDetailUrl(id));
           if (dRes.ok) setDetail((await dRes.json()) as ScrapedVoucherDetail);
         }
       } else {
@@ -150,7 +141,7 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
     setActionSuccess(null);
     setActionError(null);
     try {
-      const res = await apiFetch(getVoucherDeclineUrl(id), {
+      const res = await apiFetch(getDeclineUrl(id), {
         method: "POST",
         body: JSON.stringify({ remarks: declineRemark }),
       });
@@ -177,7 +168,7 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
     [openDeclineModal]
   );
 
-  const preview = items.slice(0, maximized ? undefined : WIDGET_PREVIEW_COUNT);
+  const preview = items.slice(0, maximized ? undefined : PREVIEW_COUNT);
 
   if (maximized) {
     return (

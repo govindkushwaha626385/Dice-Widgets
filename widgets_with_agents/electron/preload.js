@@ -1,3 +1,7 @@
+/**
+ * Electron preload: exposes safe API to renderer via contextBridge.
+ * Renderer uses window.electronAPI.invoke("api", ...) for backend calls, etc.
+ */
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {

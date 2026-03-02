@@ -1,3 +1,8 @@
+/**
+ * Voucher API routes (mounted under /api).
+ * List/detail come from scraper; approve/decline call Heimdall API.
+ */
+
 import { Router, type Request, type Response } from "express";
 import { runVouchersListScraper, runVoucherDetailScraper } from "../scrapers/vouchers/index.js";
 import { heimdallApprove, heimdallDecline } from "../services/heimdallVoucherApi.js";
@@ -5,6 +10,7 @@ import { getDiceAuthStatePath } from "../config/diceAuthPath.js";
 
 export const vouchersScraperRoutes = Router();
 
+// GET /api/widgets/vouchers — list vouchers (scraped)
 vouchersScraperRoutes.get("/widgets/vouchers", async (_req: Request, res: Response) => {
   try {
     const items = await runVouchersListScraper();
@@ -28,6 +34,7 @@ vouchersScraperRoutes.get("/widgets/vouchers", async (_req: Request, res: Respon
   }
 });
 
+// GET /api/widgets/vouchers/:id — single voucher detail (scraped)
 vouchersScraperRoutes.get("/widgets/vouchers/:id", async (req: Request, res: Response) => {
   const id = req.params.id;
   if (!id) {
@@ -47,6 +54,7 @@ vouchersScraperRoutes.get("/widgets/vouchers/:id", async (req: Request, res: Res
   }
 });
 
+// POST /api/widgets/vouchers/:id/approve — call Heimdall approve API
 vouchersScraperRoutes.post("/widgets/vouchers/:id/approve", async (req: Request, res: Response) => {
   const id = req.params.id;
   if (!id) {
@@ -68,6 +76,7 @@ vouchersScraperRoutes.post("/widgets/vouchers/:id/approve", async (req: Request,
   }
 });
 
+// POST /api/widgets/vouchers/:id/decline — call Heimdall decline API (body: { remarks })
 vouchersScraperRoutes.post("/widgets/vouchers/:id/decline", async (req: Request, res: Response) => {
   const id = req.params.id;
   if (!id) {

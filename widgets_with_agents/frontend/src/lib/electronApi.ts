@@ -1,11 +1,16 @@
 /**
- * When running inside Electron, the preload script exposes electronAPI.
- * Use this for IPC-based API calls and opening external URLs.
+ * Electron API bridge (renderer → main via IPC).
+ * In Electron: uses preload-exposed electronAPI. In browser: falls back to fetch / window.
  */
 
-export const isElectron = typeof window !== "undefined" && !!window.electronAPI;
+export const isElectron =
+  typeof window !== "undefined" && !!window.electronAPI;
 
-export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
+/** Fetch API: via IPC in Electron (main calls backend), or direct fetch in browser. */
+export async function apiFetch(
+  path: string,
+  options: RequestInit = {}
+): Promise<Response> {
   if (isElectron && window.electronAPI) {
     const { method = "GET", body } = options;
     const result = await window.electronAPI.invoke("api", {
@@ -49,6 +54,7 @@ export function closeWindow(): void {
   }
 }
 
+// --- Dice auth (Electron only) ---
 /** Dice dashboard one-time auth (Electron only). */
 export function getDiceAuthAPI(): {
   getStatus: () => Promise<{ hasAuth: boolean }>;
@@ -68,7 +74,8 @@ export function getDiceAuthAPI(): {
   };
 }
 
-/** Show desktop notification when user changes data. Use after add/edit/delete in widgets. */
+// --- Notifications ---
+/** Desktop notification (Electron or browser). */
 export async function notify(title: string, body?: string): Promise<void> {
   if (isElectron && window.electronAPI) {
     await window.electronAPI.notify(title, body ?? "");

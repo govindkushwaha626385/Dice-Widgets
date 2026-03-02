@@ -1,8 +1,14 @@
+/**
+ * Electron main process: app window, backend process, IPC handlers.
+ * Loads frontend (Vite in dev, built files in prod) and forwards API calls to backend.
+ */
+
 const { app: electronApp, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { spawn } = require("child_process");
 const http = require("http");
-// Must run before app is ready (required by puppeteer-in-electron for WhatsApp)
+
+// Must run before app ready (puppeteer-in-electron for WhatsApp)
 require("puppeteer-in-electron").initialize(electronApp);
 const whatsappService = require("./whatsappService");
 const diceAuth = require("./diceAuth");
@@ -13,6 +19,7 @@ let backendProcess = null;
 let mainWindow = null;
 const WIDGET_WINDOW_SIZE = { width: 960, height: 720 };
 
+// --- Paths ---
 function getRootPath() {
   if (electronApp.isPackaged) {
     return path.join(process.resourcesPath);
@@ -20,6 +27,7 @@ function getRootPath() {
   return path.join(__dirname, "..");
 }
 
+// --- Backend process (dev: wait for existing; prod: spawn) ---
 function startBackend() {
   return new Promise((resolve, reject) => {
     const root = getRootPath();
@@ -86,9 +94,8 @@ function waitForBackend(port, maxAttempts = 30) {
   });
 }
 
-/**
- * @param {boolean} showInitially - If false, window is created hidden (used when showing Dice login first).
- */
+// --- Main window ---
+/** showInitially: false when Dice login is shown first. */
 function createWindow(showInitially = true) {
   const root = getRootPath();
   const win = new BrowserWindow({
@@ -123,6 +130,7 @@ function createWindow(showInitially = true) {
   });
 }
 
+// --- Secondary window (widget popout or external URL) ---
 function openWindow(url, title) {
   const win = new BrowserWindow({
     width: WIDGET_WINDOW_SIZE.width,
@@ -142,7 +150,9 @@ function openWindow(url, title) {
   }
 }
 
-// IPC: perform fetch from main process (used by Supabase in Electron to avoid renderer "Failed to fetch")
+// ========== IPC handlers (renderer → main) ==========
+
+// Supabase: fetch from main (avoids renderer CORS)
 ipcMain.handle("supabase-fetch", async (_event, { url, method = "GET", headers = {}, body }) => {
   try {
     const res = await fetch(url, {
@@ -168,7 +178,7 @@ ipcMain.handle("supabase-fetch", async (_event, { url, method = "GET", headers =
   }
 });
 
-// IPC: forward API requests to backend (so renderer uses IPC instead of fetch to same origin)
+// App API: forward to local backend (renderer calls this instead of fetch)
 ipcMain.handle("api", async (_event, { path: apiPath, method = "GET", body }) => {
   const url = `http://127.0.0.1:${BACKEND_PORT}${apiPath}`;
   const opts = {
@@ -189,32 +199,26 @@ ipcMain.handle("api", async (_event, { path: apiPath, method = "GET", body }) =>
   return { ok: res.ok, status: res.status, data };
 });
 
-// IPC: open external URL in system default browser
+// Open URL in system browser / new window / close window
 ipcMain.handle("open-external", async (_event, url) => {
   const { shell } = require("electron");
   await shell.openExternal(url);
 });
-
-// IPC: desktop notification (main process so it works when window not focused)
 ipcMain.handle("notify", async (_event, { title, body }) => {
   const { Notification } = require("electron");
   if (Notification.isSupported()) {
     new Notification({ title: title || "Personal Assistant", body: body || "" }).show();
   }
 });
-
-// IPC: open a new small window (widget content or external URL e.g. Gmail)
 ipcMain.handle("open-window", async (_event, { url, title }) => {
   openWindow(url || "http://localhost:5173", title || "Window");
 });
-
-// IPC: close current window (for widget-only windows)
 ipcMain.handle("close-window", async () => {
   const win = BrowserWindow.getFocusedWindow();
   if (win) win.close();
 });
 
-// Dice dashboard one-time login (first launch)
+// Dice auth (one-time login flow)
 ipcMain.handle("dice-auth-status", () => ({ hasAuth: diceAuth.hasDiceAuth() }));
 ipcMain.handle("dice-auth-open-login", async (event) => {
   console.log("[Dice auth] Open login requested");
@@ -234,7 +238,7 @@ ipcMain.handle("dice-auth-open-login", async (event) => {
   }
 });
 
-// WhatsApp (wwebjs-electron): init, status, get chats, get messages
+// WhatsApp (wwebjs-electron)
 ipcMain.handle("whatsapp-init", async () => {
   try {
     return await whatsappService.initialize(electronApp);
@@ -262,8 +266,8 @@ ipcMain.handle("whatsapp-reset", async () => {
   await whatsappService.reset();
 });
 
+// ========== App lifecycle ==========
 electronApp.whenReady().then(async () => {
-  // In production, set a strict CSP (no unsafe-eval) to avoid security warning and harden the app
   if (!isDev) {
     const { session } = require("electron");
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {

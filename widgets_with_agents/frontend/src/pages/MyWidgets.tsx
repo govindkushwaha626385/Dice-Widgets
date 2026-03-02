@@ -7,7 +7,6 @@ import {
   TripsWidget,
   ShortcutsWidget,
   CustomFieldsWidget,
-  ProductsWidget,
   PRsWidget,
   VouchersWidget,
   EmailsWidget,
@@ -47,7 +46,6 @@ export function MyWidgets() {
         {singleWidgetId === "trips" && <TripsWidget maximized onMinimize={closeWindow} />}
         {singleWidgetId === "shortcuts" && <ShortcutsWidget maximized onMinimize={closeWindow} />}
         {singleWidgetId === "custom-fields" && <CustomFieldsWidget maximized onMinimize={closeWindow} />}
-        {singleWidgetId === "products" && <ProductsWidget maximized onMinimize={closeWindow} />}
         {singleWidgetId === "prs" && <PRsWidget maximized onMinimize={closeWindow} />}
         {singleWidgetId === "vouchers" && <VouchersWidget maximized onMinimize={closeWindow} />}
         {singleWidgetId === "emails" && <EmailsWidget maximized onMinimize={closeWindow} />}
@@ -86,7 +84,6 @@ export function MyWidgets() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <TripsWidget onMaximize={getMaximizeHandler("trips")} />
-          <ProductsWidget onMaximize={getMaximizeHandler("products")} />
           <PRsWidget onMaximize={getMaximizeHandler("prs")} />
         </div>
       </section>

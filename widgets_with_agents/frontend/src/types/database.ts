@@ -73,17 +73,6 @@ export interface Note {
   created_at: string;
 }
 
-export interface Product {
-  id: string;
-  user_id: string;
-  name: string;
-  sku: string | null;
-  description: string | null;
-  quantity: number;
-  unit_price: number;
-  created_at: string;
-}
-
 export interface PurchaseRequisition {
   id: string;
   user_id: string;
@@ -132,7 +121,6 @@ export interface Database {
       custom_fields: { Row: CustomField; Insert: Omit<CustomField, "id" | "created_at">; Update: Partial<CustomField> };
       shortcuts: { Row: Shortcut; Insert: Omit<Shortcut, "id" | "created_at">; Update: Partial<Shortcut> };
       notes: { Row: Note; Insert: Omit<Note, "id" | "created_at">; Update: Partial<Note> };
-      products: { Row: Product; Insert: Omit<Product, "id" | "created_at">; Update: Partial<Product> };
       purchase_requisitions: { Row: PurchaseRequisition; Insert: Omit<PurchaseRequisition, "id" | "created_at">; Update: Partial<PurchaseRequisition> };
       vouchers: { Row: Voucher; Insert: Omit<Voucher, "id" | "created_at">; Update: Partial<Voucher> };
       activity_logs: { Row: ActivityLog; Insert: Omit<ActivityLog, "id" | "created_at">; Update: Partial<ActivityLog> };

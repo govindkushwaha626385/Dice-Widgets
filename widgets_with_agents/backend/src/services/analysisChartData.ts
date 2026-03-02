@@ -5,6 +5,7 @@
 
 import { runExpensesListScraper } from "../scrapers/expenses/index.js";
 import { runVouchersListScraper } from "../scrapers/vouchers/index.js";
+import { runTripsListScraper } from "../scrapers/trips/index.js";
 import { supabaseAdmin, isSupabaseConfigured } from "../config/supabase.js";
 
 export interface ChartDataPoint {
@@ -131,30 +132,24 @@ export async function getAnalysisChartData(userId: string): Promise<AnalysisChar
     count: vouchers.length,
   };
 
-  let tripsData: TripsChartData = {
+  // Trips: from scraper (no DB)
+  const trips = await runTripsListScraper().catch(() => []);
+  const tripsData: TripsChartData = {
     byStatus: emptyChart(),
-    byMonth: emptyChart(),
-    count: 0,
+    byMonth: aggregateBy(
+      trips.filter((t) => t.startDate),
+      (t) => monthKey(t.startDate),
+      () => 1
+    ),
+    count: trips.length,
   };
+
   let prsData: PRsChartData = emptyPRs;
-
   if (isSupabaseConfigured() && supabaseAdmin) {
-    const [tripsRes, prsRes] = await Promise.all([
-      supabaseAdmin.from("trips").select("start_date, status").eq("user_id", userId),
-      supabaseAdmin.from("purchase_requisitions").select("status").eq("user_id", userId),
-    ]);
-
-    const trips = (tripsRes.data ?? []) as Array<{ start_date: string; status?: string }>;
-    tripsData = {
-      byStatus: aggregateBy(trips, (t) => t.status ?? "Other", () => 1),
-      byMonth: aggregateBy(
-        trips.filter((t) => t.start_date),
-        (t) => monthKey(t.start_date),
-        () => 1
-      ),
-      count: trips.length,
-    };
-
+    const prsRes = await supabaseAdmin
+      .from("purchase_requisitions")
+      .select("status")
+      .eq("user_id", userId);
     const prs = (prsRes.data ?? []) as Array<{ status: string }>;
     prsData = {
       byStatus: aggregateBy(prs, (p) => p.status || "Other", () => 1),

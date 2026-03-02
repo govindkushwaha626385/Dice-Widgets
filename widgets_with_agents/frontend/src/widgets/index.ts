@@ -6,7 +6,6 @@ export { NotesWidget } from "./notes";
 export { TripsWidget } from "./trips";
 export { ShortcutsWidget } from "./shortcuts";
 export { CustomFieldsWidget } from "./custom-fields";
-export { ProductsWidget } from "./products";
 export { PRsWidget } from "./prs";
 export { VouchersWidget } from "./vouchers";
 export { EmailsWidget } from "./emails";
