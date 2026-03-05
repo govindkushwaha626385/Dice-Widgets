@@ -6,12 +6,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconPlane } from "../../components/WidgetIcons";
 import { Modal } from "../../components/Modal";
 import { apiFetch, notify } from "../../lib/electronApi";
 import type { ScrapedTripItem, ScrapedTripDetail } from "./types";
 
 const API_BASE = "/api/widgets/trips";
-const PREVIEW_COUNT = 5;
+const PREVIEW_COUNT = 3;
 
 /** Exclude "View System logs" from display (don't show). */
 function isViewSystemLogs(s: string | undefined | null): boolean {
@@ -292,7 +293,7 @@ export function TripsWidget({ maximized, onMinimize, onMaximize }: TripsWidgetPr
 
   return (
     <>
-      <WidgetWrapper title="Trips" variant="journey" onMaximize={onMaximize}>
+      <WidgetWrapper title="Trips" variant="journey" icon={<IconPlane />} onMaximize={onMaximize}>
         {loading ? (
           <p className="text-sm text-teal-700/70">Loading…</p>
         ) : error ? (
@@ -303,7 +304,7 @@ export function TripsWidget({ maximized, onMinimize, onMaximize }: TripsWidgetPr
             {hint && <p className="text-muted text-xs mt-2">{hint}</p>}
           </div>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="space-y-1.5 max-h-[180px] overflow-auto">
             {preview.map((t) => (
               <li
                 key={t.id}

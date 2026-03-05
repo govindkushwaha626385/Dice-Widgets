@@ -1,6 +1,7 @@
 /** Analysis widget: Charts per widget (Expenses, Vouchers, Trips, PRs) + optional AI summary. */
 import { useState } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconChart } from "../../components/WidgetIcons";
 import { apiFetch } from "../../lib/electronApi";
 import { useAuth } from "../../hooks/useAuth";
 import { ThemeProvider, C1Component } from "@thesysai/genui-sdk";
@@ -27,7 +28,13 @@ function extractC1Content(raw: unknown): string | null {
 
 type ViewMode = "charts" | "ai";
 
-export function AnalysisWidget() {
+interface AnalysisWidgetProps {
+  onMaximize?: () => void;
+  /** When true, full-size charts (e.g. in single-widget view). */
+  maximized?: boolean;
+}
+
+export function AnalysisWidget({ onMaximize, maximized }: AnalysisWidgetProps = {}) {
   const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>("charts");
   const [loading, setLoading] = useState(false);
@@ -70,7 +77,7 @@ export function AnalysisWidget() {
   }
 
   return (
-    <WidgetWrapper title="Data analysis" variant="default" className="min-h-[320px]">
+    <WidgetWrapper title="Analytics" variant="default" icon={<IconChart />} onMaximize={onMaximize} className="min-h-[280px]">
       <ThemeProvider>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-1 border-b border-slate-200 pb-2">
@@ -99,8 +106,8 @@ export function AnalysisWidget() {
               {!user ? (
                 <p className="text-sm text-slate-500">Sign in to view charts.</p>
               ) : (
-                <div className="overflow-auto max-h-[520px] min-h-[200px]">
-                  <ChartsView userId={user.id} />
+                <div className="overflow-auto max-h-[480px] min-h-[180px]">
+                  <ChartsView userId={user.id} compact={!maximized} />
                 </div>
               )}
             </>

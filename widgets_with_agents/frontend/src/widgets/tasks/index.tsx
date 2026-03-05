@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useGoogleTasks } from "../../hooks/useGoogleTasks";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconCheckSquare } from "../../components/WidgetIcons";
 import { getDisplayEmail } from "../../lib/integrations";
 import { openExternal } from "../../lib/electronApi";
 
@@ -76,7 +77,7 @@ export function TasksWidget({ maximized, onMinimize, onMaximize }: TasksWidgetPr
   }
 
   return (
-    <WidgetWrapper title="Tasks" variant="workflow" onAddClick={() => openExternal(connectUrl)} onMaximize={onMaximize} addLabel="Open Tasks">
+    <WidgetWrapper title="Tasks" variant="workflow" icon={<IconCheckSquare />} onAddClick={() => openExternal(connectUrl)} onMaximize={onMaximize} addLabel="Open Tasks">
       {content}
     </WidgetWrapper>
   );

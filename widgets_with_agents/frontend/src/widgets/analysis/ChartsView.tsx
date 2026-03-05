@@ -23,27 +23,33 @@ import type { AnalysisChartData, ChartDataPoint } from "./types";
 
 const CHART_COLORS = ["#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#6366f1", "#14b8a6", "#f97316"];
 
+const CHART_HEIGHT_DEFAULT = 200;
+const CHART_HEIGHT_COMPACT = 160;
+
 function ChartSection({
   title,
   data,
   valueLabel = "Value",
+  compact,
 }: {
   title: string;
   data: ChartDataPoint[];
   valueLabel?: string;
+  compact?: boolean;
 }) {
+  const h = compact ? CHART_HEIGHT_COMPACT : CHART_HEIGHT_DEFAULT;
   if (!data || data.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 text-center text-sm text-slate-500">
+      <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 text-center text-xs text-slate-500">
         {title} — No data
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
-      <div className="h-[200px] w-full">
+    <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
+      <div className="w-full" style={{ height: h }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -52,14 +58,14 @@ function ChartSection({
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius={70}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              outerRadius={compact ? 56 : 70}
+              label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
             >
               {data.map((_, i) => (
                 <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(v: number) => [v, valueLabel]} />
+            <Tooltip formatter={(v: number | undefined) => [v ?? 0, valueLabel]} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -71,22 +77,25 @@ function BarSection({
   title,
   data,
   valueLabel = "Value",
+  compact,
 }: {
   title: string;
   data: ChartDataPoint[];
   valueLabel?: string;
+  compact?: boolean;
 }) {
+  const h = compact ? CHART_HEIGHT_COMPACT : CHART_HEIGHT_DEFAULT;
   if (!data || data.length === 0) return null;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
-      <div className="h-[200px] w-full">
+    <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
+      <div className="w-full" style={{ height: h }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip formatter={(v: number) => [v, valueLabel]} />
+            <Tooltip formatter={(v: number | undefined) => [v ?? 0, valueLabel]} />
             <Bar dataKey="value" fill="#f59e0b" radius={[4, 4, 0, 0]} name={valueLabel} />
           </BarChart>
         </ResponsiveContainer>
@@ -99,22 +108,25 @@ function LineSection({
   title,
   data,
   valueLabel = "Value",
+  compact,
 }: {
   title: string;
   data: ChartDataPoint[];
   valueLabel?: string;
+  compact?: boolean;
 }) {
+  const h = compact ? CHART_HEIGHT_COMPACT : CHART_HEIGHT_DEFAULT;
   if (!data || data.length === 0) return null;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
-      <div className="h-[200px] w-full">
+    <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
+      <div className="w-full" style={{ height: h }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip formatter={(v: number) => [v, valueLabel]} />
+            <Tooltip formatter={(v: number | undefined) => [v ?? 0, valueLabel]} />
             <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} name={valueLabel} />
           </LineChart>
         </ResponsiveContainer>
@@ -127,22 +139,25 @@ function AreaSection({
   title,
   data,
   valueLabel = "Value",
+  compact,
 }: {
   title: string;
   data: ChartDataPoint[];
   valueLabel?: string;
+  compact?: boolean;
 }) {
+  const h = compact ? CHART_HEIGHT_COMPACT : CHART_HEIGHT_DEFAULT;
   if (!data || data.length === 0) return null;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
-      <div className="h-[200px] w-full">
+    <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
+      <div className="w-full" style={{ height: h }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip formatter={(v: number) => [v, valueLabel]} />
+            <Tooltip formatter={(v: number | undefined) => [v ?? 0, valueLabel]} />
             <Area type="monotone" dataKey="value" stroke="#10b981" fill="#10b98133" strokeWidth={2} name={valueLabel} />
           </AreaChart>
         </ResponsiveContainer>
@@ -156,6 +171,9 @@ const WIDGET_TABS = [
   { id: "vouchers" as const, label: "Vouchers" },
   { id: "trips" as const, label: "Trips" },
   { id: "prs" as const, label: "Purchase requests" },
+  { id: "vendor_advance" as const, label: "Vendor Advance" },
+  { id: "vendor_settlements" as const, label: "Vendor Settlements" },
+  { id: "employee_settlements" as const, label: "Employee Settlements" },
 ];
 
 function SummaryCards({
@@ -198,9 +216,11 @@ function SummaryCards({
 
 interface ChartsViewProps {
   userId: string;
+  /** Smaller charts for dashboard grid */
+  compact?: boolean;
 }
 
-export function ChartsView({ userId }: ChartsViewProps) {
+export function ChartsView({ userId, compact }: ChartsViewProps) {
   const [chartData, setChartData] = useState<AnalysisChartData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -287,12 +307,12 @@ export function ChartsView({ userId }: ChartsViewProps) {
                 variant="amber"
               />
             </div>
-            <ChartSection title="By service (pie)" data={chartData.expenses.byService} valueLabel="Amount" />
-            <BarSection title="By service (bar)" data={chartData.expenses.byService} valueLabel="Amount" />
-            <LineSection title="By month (line)" data={chartData.expenses.byMonth} valueLabel="Amount" />
-            <AreaSection title="By month (area)" data={chartData.expenses.byMonth} valueLabel="Amount" />
-            <ChartSection title="By type (pie)" data={chartData.expenses.byType} valueLabel="Amount" />
-            <BarSection title="By type (bar)" data={chartData.expenses.byType} valueLabel="Amount" />
+            <ChartSection title="By service (pie)" data={chartData.expenses.byService} valueLabel="Amount" compact={compact} />
+            <BarSection title="By service (bar)" data={chartData.expenses.byService} valueLabel="Amount" compact={compact} />
+            <LineSection title="By month (line)" data={chartData.expenses.byMonth} valueLabel="Amount" compact={compact} />
+            <AreaSection title="By month (area)" data={chartData.expenses.byMonth} valueLabel="Amount" compact={compact} />
+            <ChartSection title="By type (pie)" data={chartData.expenses.byType} valueLabel="Amount" compact={compact} />
+            <BarSection title="By type (bar)" data={chartData.expenses.byType} valueLabel="Amount" compact={compact} />
           </>
         )}
         {activeTab === "vouchers" && (
@@ -305,30 +325,78 @@ export function ChartsView({ userId }: ChartsViewProps) {
                 variant="rose"
               />
             </div>
-            <ChartSection title="By type (pie)" data={chartData.vouchers.byType} valueLabel="Count" />
-            <BarSection title="By type (bar)" data={chartData.vouchers.byType} valueLabel="Count" />
-            <ChartSection title="By type — amount (pie)" data={chartData.vouchers.byTypeAmount ?? []} valueLabel="Amount" />
-            <BarSection title="By type — amount (bar)" data={chartData.vouchers.byTypeAmount ?? []} valueLabel="Amount" />
-            <ChartSection title="By office (pie)" data={chartData.vouchers.byOffice ?? []} valueLabel="Count" />
-            <BarSection title="By office (bar)" data={chartData.vouchers.byOffice ?? []} valueLabel="Count" />
-            <ChartSection title="By status / claimed (pie)" data={chartData.vouchers.byStatus} valueLabel="Count" />
-            <BarSection title="By status / claimed (bar)" data={chartData.vouchers.byStatus} valueLabel="Count" />
-            <LineSection title="By month (line)" data={chartData.vouchers.byMonth ?? []} valueLabel="Count" />
-            <AreaSection title="By month (area)" data={chartData.vouchers.byMonth ?? []} valueLabel="Count" />
+            <ChartSection title="By type (pie)" data={chartData.vouchers.byType} valueLabel="Count" compact={compact} />
+            <BarSection title="By type (bar)" data={chartData.vouchers.byType} valueLabel="Count" compact={compact} />
+            <ChartSection title="By type — amount (pie)" data={chartData.vouchers.byTypeAmount ?? []} valueLabel="Amount" compact={compact} />
+            <BarSection title="By type — amount (bar)" data={chartData.vouchers.byTypeAmount ?? []} valueLabel="Amount" compact={compact} />
+            <ChartSection title="By office (pie)" data={chartData.vouchers.byOffice ?? []} valueLabel="Count" compact={compact} />
+            <BarSection title="By office (bar)" data={chartData.vouchers.byOffice ?? []} valueLabel="Count" compact={compact} />
+            <ChartSection title="By status (pie)" data={chartData.vouchers.byStatus} valueLabel="Count" compact={compact} />
+            <BarSection title="By status (bar)" data={chartData.vouchers.byStatus} valueLabel="Count" compact={compact} />
+            <LineSection title="By month (line)" data={chartData.vouchers.byMonth ?? []} valueLabel="Count" compact={compact} />
+            <AreaSection title="By month (area)" data={chartData.vouchers.byMonth ?? []} valueLabel="Count" compact={compact} />
           </>
         )}
         {activeTab === "trips" && (
           <>
-            <ChartSection title="By status (pie)" data={chartData.trips.byStatus} valueLabel="Count" />
-            <BarSection title="By status (bar)" data={chartData.trips.byStatus} valueLabel="Count" />
-            <LineSection title="By month (line)" data={chartData.trips.byMonth} valueLabel="Count" />
-            <AreaSection title="By month (area)" data={chartData.trips.byMonth} valueLabel="Count" />
+            <ChartSection title="By status (pie)" data={chartData.trips.byStatus} valueLabel="Count" compact={compact} />
+            <BarSection title="By status (bar)" data={chartData.trips.byStatus} valueLabel="Count" compact={compact} />
+            <LineSection title="By month (line)" data={chartData.trips.byMonth} valueLabel="Count" compact={compact} />
+            <AreaSection title="By month (area)" data={chartData.trips.byMonth} valueLabel="Count" compact={compact} />
           </>
         )}
         {activeTab === "prs" && (
           <>
-            <ChartSection title="By status (pie)" data={chartData.purchase_requisitions.byStatus} valueLabel="Count" />
-            <BarSection title="By status (bar)" data={chartData.purchase_requisitions.byStatus} valueLabel="Count" />
+            <ChartSection title="By status (pie)" data={chartData.purchase_requisitions.byStatus} valueLabel="Count" compact={compact} />
+            <BarSection title="By status (bar)" data={chartData.purchase_requisitions.byStatus} valueLabel="Count" compact={compact} />
+          </>
+        )}
+        {activeTab === "vendor_advance" && (
+          <>
+            <div className="sm:col-span-2">
+              <SummaryCards
+                totalAmount={chartData.vendor_advance.totalAmount}
+                count={chartData.vendor_advance.count}
+                amountLabel="Total vendor advance"
+                variant="amber"
+              />
+            </div>
+            <ChartSection title="By vendor (pie)" data={chartData.vendor_advance.byVendor} valueLabel="Amount" compact={compact} />
+            <BarSection title="By vendor (bar)" data={chartData.vendor_advance.byVendor} valueLabel="Amount" compact={compact} />
+          </>
+        )}
+        {activeTab === "vendor_settlements" && (
+          <>
+            <div className="sm:col-span-2">
+              <SummaryCards
+                totalAmount={chartData.vendor_settlements.totalAmount}
+                count={chartData.vendor_settlements.count}
+                amountLabel="Total vendor settlements"
+                variant="rose"
+              />
+            </div>
+            <ChartSection title="By type (pie)" data={chartData.vendor_settlements.byType} valueLabel="Count" compact={compact} />
+            <BarSection title="By type (bar)" data={chartData.vendor_settlements.byType} valueLabel="Count" compact={compact} />
+            <ChartSection title="By vendor (pie)" data={chartData.vendor_settlements.byVendor} valueLabel="Count" compact={compact} />
+            <BarSection title="By vendor (bar)" data={chartData.vendor_settlements.byVendor} valueLabel="Count" compact={compact} />
+            <LineSection title="By month (line)" data={chartData.vendor_settlements.byMonth} valueLabel="Amount" compact={compact} />
+            <AreaSection title="By month (area)" data={chartData.vendor_settlements.byMonth} valueLabel="Amount" compact={compact} />
+          </>
+        )}
+        {activeTab === "employee_settlements" && (
+          <>
+            <div className="sm:col-span-2">
+              <SummaryCards
+                totalAmount={chartData.employee_settlements.totalAmount}
+                count={chartData.employee_settlements.count}
+                amountLabel="Total employee settlements"
+                variant="amber"
+              />
+            </div>
+            <ChartSection title="By type (pie)" data={chartData.employee_settlements.byType} valueLabel="Count" compact={compact} />
+            <BarSection title="By type (bar)" data={chartData.employee_settlements.byType} valueLabel="Count" compact={compact} />
+            <LineSection title="By month (line)" data={chartData.employee_settlements.byMonth} valueLabel="Amount" compact={compact} />
+            <AreaSection title="By month (area)" data={chartData.employee_settlements.byMonth} valueLabel="Amount" compact={compact} />
           </>
         )}
       </div>

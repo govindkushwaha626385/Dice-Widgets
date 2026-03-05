@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCalendarEvents } from "../../hooks/useCalendarEvents";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconCalendar } from "../../components/WidgetIcons";
 import { getDisplayEmail } from "../../lib/integrations";
 import { openExternal } from "../../lib/electronApi";
 
@@ -27,7 +28,7 @@ export function CalendarWidget({ maximized, onMinimize, onMaximize }: CalendarWi
   const connected = !loading && !error;
   const useReal = connected;
   const eventList = useReal ? apiEvents : placeholderEvents;
-  const showList = maximized ? eventList : eventList.slice(0, 2);
+  const showList = maximized ? eventList : eventList.slice(0, 3);
   const emptyEvents = useReal && apiEvents.length === 0;
 
   const content = (
@@ -78,7 +79,7 @@ export function CalendarWidget({ maximized, onMinimize, onMaximize }: CalendarWi
   }
 
   return (
-    <WidgetWrapper title="Calendar" variant="calendar" onMaximize={onMaximize}>
+    <WidgetWrapper title="Calendar" variant="calendar" icon={<IconCalendar />} onMaximize={onMaximize}>
       {content}
     </WidgetWrapper>
   );

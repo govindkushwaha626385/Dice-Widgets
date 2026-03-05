@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useGmailEmails } from "../../hooks/useGmailEmails";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconMail } from "../../components/WidgetIcons";
 import { getDisplayEmail } from "../../lib/integrations";
 import { openExternal } from "../../lib/electronApi";
 
@@ -27,7 +28,7 @@ export function EmailsWidget({ maximized, onMinimize, onMaximize }: EmailsWidget
   const connected = !loading && !error;
   const useReal = connected;
   const emailList = useReal ? apiEmails : placeholderEmails;
-  const showList = maximized ? emailList : emailList.slice(0, 2);
+  const showList = maximized ? emailList : emailList.slice(0, 3);
   const emptyInbox = useReal && apiEmails.length === 0;
 
   const content = (
@@ -79,7 +80,7 @@ export function EmailsWidget({ maximized, onMinimize, onMaximize }: EmailsWidget
   }
 
   return (
-    <WidgetWrapper title="Emails" variant="inbox" onMaximize={onMaximize}>
+    <WidgetWrapper title="Emails" variant="inbox" icon={<IconMail />} onMaximize={onMaximize}>
       {content}
     </WidgetWrapper>
   );

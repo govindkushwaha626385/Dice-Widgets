@@ -1,6 +1,7 @@
 /** Purchase requisitions widget: list and add PRs with approve/decline. Uses Supabase "purchase_requisitions". */
 import { useState, useEffect } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconBriefcase } from "../../components/WidgetIcons";
 import { Modal } from "../../components/Modal";
 import { supabase } from "../../lib/supabase";
 import { notify } from "../../lib/electronApi";
@@ -18,6 +19,7 @@ export function PRsWidget({ maximized, onMinimize, onMaximize }: PRsWidgetProps)
   const [items, setItems] = useState<PurchaseRequisition[]>([]);
   const [loading, setLoading] = useState(true);
   const limit = maximized ? 200 : 3;
+  const preview = items.slice(0, maximized ? undefined : 3);
 
   useEffect(() => {
     const fetchPRs = async () => {
@@ -117,14 +119,14 @@ export function PRsWidget({ maximized, onMinimize, onMaximize }: PRsWidgetProps)
 
   return (
     <>
-      <WidgetWrapper title="Purchase Requisitions" variant="workflow" onAddClick={() => setOpen(true)} onMaximize={onMaximize} addLabel="Add PR">
+      <WidgetWrapper title="Purchase Requisitions" variant="workflow" icon={<IconBriefcase />} onAddClick={() => setOpen(true)} onMaximize={onMaximize} addLabel="Add PR">
         {loading ? (
           <p className="text-sm text-violet-700/60">Loading…</p>
-        ) : items.length === 0 ? (
+        ) : preview.length === 0 ? (
           <p className="text-sm text-violet-700/60">No PRs. Click + to add.</p>
         ) : (
-          <ul className="space-y-2">
-            {items.map((pr) => (
+          <ul className="space-y-2 max-h-[180px] overflow-auto">
+            {preview.map((pr) => (
               <li key={pr.id} className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg bg-white/80 border border-violet-200/80">
                 <span className="font-mono text-sm font-medium text-slate-800">{pr.pr_number}</span>
                 <div className="flex items-center gap-2">

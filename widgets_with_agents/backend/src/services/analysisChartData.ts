@@ -1,11 +1,13 @@
 /**
- * Builds chart-ready aggregates for the Analysis widget (Expenses, Vouchers, Trips, PRs).
- * Expenses and Vouchers use scraped data; Trips and PRs use Supabase when configured.
+ * Builds chart-ready aggregates for the Analysis widget (Expenses, Vouchers, Trips, PRs, Vendor Advance, Vendor Settlements, Employee Settlements).
  */
 
 import { runExpensesListScraper } from "../scrapers/expenses/index.js";
 import { runVouchersListScraper } from "../scrapers/vouchers/index.js";
 import { runTripsListScraper } from "../scrapers/trips/index.js";
+import { runVendorAdvancesListScraper } from "../scrapers/vendorAdvance/index.js";
+import { runVendorSettlementsListScraper } from "../scrapers/vendorSettlements/index.js";
+import { runEmployeeSettlementsListScraper } from "../scrapers/employeeSettlements/index.js";
 import { supabaseAdmin, isSupabaseConfigured } from "../config/supabase.js";
 
 export interface ChartDataPoint {
@@ -42,11 +44,35 @@ export interface PRsChartData {
   count: number;
 }
 
+export interface VendorAdvanceChartData {
+  byVendor: ChartDataPoint[];
+  totalAmount: number;
+  count: number;
+}
+
+export interface VendorSettlementsChartData {
+  byType: ChartDataPoint[];
+  byVendor: ChartDataPoint[];
+  byMonth: ChartDataPoint[];
+  totalAmount: number;
+  count: number;
+}
+
+export interface EmployeeSettlementsChartData {
+  byType: ChartDataPoint[];
+  byMonth: ChartDataPoint[];
+  totalAmount: number;
+  count: number;
+}
+
 export interface AnalysisChartData {
   expenses: ExpensesChartData;
   vouchers: VouchersChartData;
   trips: TripsChartData;
   purchase_requisitions: PRsChartData;
+  vendor_advance: VendorAdvanceChartData;
+  vendor_settlements: VendorSettlementsChartData;
+  employee_settlements: EmployeeSettlementsChartData;
 }
 
 function parseAmount(amountStr: string): number {
@@ -96,6 +122,24 @@ export async function getAnalysisChartData(userId: string): Promise<AnalysisChar
   };
   const emptyPRs: PRsChartData = {
     byStatus: emptyChart(),
+    count: 0,
+  };
+  const emptyVendorAdvance: VendorAdvanceChartData = {
+    byVendor: emptyChart(),
+    totalAmount: 0,
+    count: 0,
+  };
+  const emptyVendorSettlements: VendorSettlementsChartData = {
+    byType: emptyChart(),
+    byVendor: emptyChart(),
+    byMonth: emptyChart(),
+    totalAmount: 0,
+    count: 0,
+  };
+  const emptyEmployeeSettlements: EmployeeSettlementsChartData = {
+    byType: emptyChart(),
+    byMonth: emptyChart(),
+    totalAmount: 0,
     count: 0,
   };
 
@@ -157,10 +201,48 @@ export async function getAnalysisChartData(userId: string): Promise<AnalysisChar
     };
   }
 
+  const vendorAdvances = await runVendorAdvancesListScraper().catch(() => []);
+  const vaAmounts = vendorAdvances.map((v) => ({ ...v, numericAmount: parseAmount(v.amount) }));
+  const vendorAdvanceData: VendorAdvanceChartData = {
+    byVendor: aggregateBy(vaAmounts, (v) => v.vendorName || "Other", (v) => v.numericAmount),
+    totalAmount: vaAmounts.reduce((s, v) => s + v.numericAmount, 0),
+    count: vendorAdvances.length,
+  };
+
+  const vendorSettlements = await runVendorSettlementsListScraper().catch(() => []);
+  const vsAmounts = vendorSettlements.map((v) => ({ ...v, numericAmount: parseAmount(v.amount) }));
+  const vendorSettlementsData: VendorSettlementsChartData = {
+    byType: aggregateBy(vsAmounts, (v) => v.type || "Other", () => 1),
+    byVendor: aggregateBy(vsAmounts, (v) => v.vendorName || "Other", () => 1),
+    byMonth: aggregateBy(
+      vsAmounts.filter((v) => v.date),
+      (v) => monthKey(v.date),
+      (v) => v.numericAmount
+    ),
+    totalAmount: vsAmounts.reduce((s, v) => s + v.numericAmount, 0),
+    count: vendorSettlements.length,
+  };
+
+  const employeeSettlements = await runEmployeeSettlementsListScraper().catch(() => []);
+  const esAmounts = employeeSettlements.map((e) => ({ ...e, numericAmount: parseAmount(e.amount) }));
+  const employeeSettlementsData: EmployeeSettlementsChartData = {
+    byType: aggregateBy(esAmounts, (e) => e.type || "Other", () => 1),
+    byMonth: aggregateBy(
+      esAmounts.filter((e) => e.date),
+      (e) => monthKey(e.date),
+      (e) => e.numericAmount
+    ),
+    totalAmount: esAmounts.reduce((s, e) => s + e.numericAmount, 0),
+    count: employeeSettlements.length,
+  };
+
   return {
     expenses: expensesData,
     vouchers: vouchersData,
     trips: tripsData,
     purchase_requisitions: prsData,
+    vendor_advance: vendorAdvanceData,
+    vendor_settlements: vendorSettlementsData,
+    employee_settlements: employeeSettlementsData,
   };
 }

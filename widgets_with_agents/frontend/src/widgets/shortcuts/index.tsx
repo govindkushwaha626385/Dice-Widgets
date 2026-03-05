@@ -1,6 +1,7 @@
 /** Shortcuts widget: list and open URL shortcuts. Uses Supabase table "shortcuts". */
 import { useState, useEffect } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconLink } from "../../components/WidgetIcons";
 import { Modal } from "../../components/Modal";
 import { supabase } from "../../lib/supabase";
 import { notify, openExternal } from "../../lib/electronApi";
@@ -16,7 +17,8 @@ export function ShortcutsWidget({ maximized, onMinimize, onMaximize }: Shortcuts
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Shortcut[]>([]);
   const [loading, setLoading] = useState(true);
-  const limit = maximized ? 100 : 6;
+  const limit = maximized ? 100 : 8;
+  const preview = items.slice(0, maximized ? undefined : 8);
 
   useEffect(() => {
     const fetchShortcuts = async () => {
@@ -77,22 +79,22 @@ export function ShortcutsWidget({ maximized, onMinimize, onMaximize }: Shortcuts
 
   return (
     <>
-      <WidgetWrapper title="Shortcuts" variant="tiles" onAddClick={() => setOpen(true)} onMaximize={onMaximize} addLabel="Add shortcut">
+      <WidgetWrapper title="Shortcuts" variant="tiles" icon={<IconLink />} onAddClick={() => setOpen(true)} onMaximize={onMaximize} addLabel="Add shortcut">
         {loading ? (
           <p className="text-sm text-emerald-700/60">Loading…</p>
-        ) : items.length === 0 ? (
+        ) : preview.length === 0 ? (
           <p className="text-sm text-emerald-700/60">No shortcuts. Click + to add.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-1.5">
-            {items.map((s) => (
+          <div className="grid grid-cols-2 gap-1.5 max-h-[280px] overflow-auto">
+            {preview.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => openExternal(s.url)}
-                className="flex items-center gap-1.5 py-1.5 px-2 rounded-md bg-white/80 border border-emerald-200/60 hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 font-medium truncate text-left"
+                className="flex items-center gap-1.5 py-1.5 px-2 rounded-md bg-white/80 border border-emerald-200/60 hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 font-medium text-left min-w-0"
               >
                 <span className="w-6 h-6 rounded bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 text-xs">↗</span>
-                <span className="truncate">{s.title}</span>
+                <span className="min-w-0 break-words">{s.title}</span>
               </button>
             ))}
           </div>

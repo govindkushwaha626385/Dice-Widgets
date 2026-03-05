@@ -34,9 +34,33 @@ export interface PRsChartData {
   count: number;
 }
 
+export interface VendorAdvanceChartData {
+  byVendor: ChartDataPoint[];
+  totalAmount: number;
+  count: number;
+}
+
+export interface VendorSettlementsChartData {
+  byType: ChartDataPoint[];
+  byVendor: ChartDataPoint[];
+  byMonth: ChartDataPoint[];
+  totalAmount: number;
+  count: number;
+}
+
+export interface EmployeeSettlementsChartData {
+  byType: ChartDataPoint[];
+  byMonth: ChartDataPoint[];
+  totalAmount: number;
+  count: number;
+}
+
 export interface AnalysisChartData {
   expenses: ExpensesChartData;
   vouchers: VouchersChartData;
   trips: TripsChartData;
   purchase_requisitions: PRsChartData;
+  vendor_advance: VendorAdvanceChartData;
+  vendor_settlements: VendorSettlementsChartData;
+  employee_settlements: EmployeeSettlementsChartData;
 }

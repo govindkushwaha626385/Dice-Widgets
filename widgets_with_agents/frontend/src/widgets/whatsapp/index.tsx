@@ -1,6 +1,7 @@
 /** WhatsApp widget: contacts list and in-app WhatsApp (Electron). Uses Supabase + Electron wwebjs. */
 import { useState, useEffect, useCallback } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconMessage } from "../../components/WidgetIcons";
 import { Modal } from "../../components/Modal";
 import { supabase } from "../../lib/supabase";
 import { notify, openExternal, isElectron } from "../../lib/electronApi";
@@ -340,6 +341,7 @@ export function WhatsAppWidget({ maximized, onMinimize, onMaximize }: WhatsAppWi
       <WidgetWrapper
         title="WhatsApp"
         variant="cta"
+        icon={<IconMessage />}
         onAddClick={() => setOpen(true)}
         onMaximize={onMaximize}
         addLabel="Add number"
@@ -356,7 +358,7 @@ export function WhatsAppWidget({ maximized, onMinimize, onMaximize }: WhatsAppWi
           <>
             <button type="button" onClick={() => openExternal(WHATSAPP_WEB_URL)} className="text-xs text-green-600 hover:underline mb-2">Open WhatsApp Web</button>
             <ul className="space-y-2">
-              {contacts.slice(0, 4).map((c) => <li key={c.id}>{contactRow(c)}</li>)}
+              {contacts.slice(0, 3).map((c) => <li key={c.id}>{contactRow(c)}</li>)}
             </ul>
           </>
         )}

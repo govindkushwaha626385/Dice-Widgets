@@ -3,6 +3,7 @@
  */
 import { useState, useEffect } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconNote } from "../../components/WidgetIcons";
 import { Modal } from "../../components/Modal";
 import { supabase } from "../../lib/supabase";
 import { notify } from "../../lib/electronApi";
@@ -82,9 +83,9 @@ export function NotesWidget({ maximized, onMinimize, onMaximize }: NotesWidgetPr
 
   return (
     <>
-      <WidgetWrapper title="Notes" variant="sticky" onAddClick={() => setOpen(true)} onMaximize={onMaximize} addLabel="Add note">
+      <WidgetWrapper title="Notes" variant="sticky" icon={<IconNote />} onAddClick={() => setOpen(true)} onMaximize={onMaximize} addLabel="Add note">
         {loading ? <p className="text-muted">Loading…</p> : preview.length === 0 ? <p className="text-muted">No notes. Click + to add.</p> : (
-          <ul className="space-y-1">
+          <ul className="space-y-1 max-h-[180px] overflow-auto">
             {preview.map((n) => (
               <li key={n.id} className="py-1.5 px-2 rounded-md bg-white/70 border border-yellow-200/50">
                 <span className="font-medium text-slate-800 block truncate">{n.title}</span>

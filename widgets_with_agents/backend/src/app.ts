@@ -24,6 +24,10 @@ import { thesysRoutes } from "./routes/thesysRoutes.js";
 import { expensesScraperRoutes } from "./routes/expensesScraperRoutes.js";
 import { vouchersScraperRoutes } from "./routes/vouchersScraperRoutes.js";
 import { tripsScraperRoutes } from "./routes/tripsScraperRoutes.js";
+import { vendorAdvanceScraperRoutes } from "./routes/vendorAdvanceScraperRoutes.js";
+import { employeeSettlementsRoutes } from "./routes/employeeSettlementsRoutes.js";
+import { vendorSettlementsRoutes } from "./routes/vendorSettlementsRoutes.js";
+import { transfersAccountsRoutes } from "./routes/transfersAccountsRoutes.js";
 import { diceAuthRoutes } from "./routes/diceAuthRoutes.js";
 
 const PORT = process.env.PORT ?? 3001;
@@ -42,6 +46,10 @@ app.use("/api", thesysRoutes);
 app.use("/api", expensesScraperRoutes);
 app.use("/api", vouchersScraperRoutes);
 app.use("/api", tripsScraperRoutes);
+app.use("/api", vendorAdvanceScraperRoutes);
+app.use("/api", employeeSettlementsRoutes);
+app.use("/api", vendorSettlementsRoutes);
+app.use("/api", transfersAccountsRoutes);
 app.use("/api", diceAuthRoutes);
 
 // Health check (used by Electron to wait for backend)

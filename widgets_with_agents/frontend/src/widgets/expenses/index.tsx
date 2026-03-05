@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useCallback } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconWallet } from "../../components/WidgetIcons";
 import { Modal } from "../../components/Modal";
 import { apiFetch } from "../../lib/electronApi";
 import type { ScrapedExpenseItem, ScrapedExpenseDetail } from "./types";
@@ -201,7 +202,7 @@ export function ExpenseWidget({ maximized, onMinimize, onMaximize }: ExpenseWidg
 
   return (
     <>
-      <WidgetWrapper title="Expenses" variant="receipt" onMaximize={onMaximize} minHeight={false}>
+      <WidgetWrapper title="Expenses" variant="receipt" icon={<IconWallet />} onMaximize={onMaximize} minHeight={false}>
         {loading ? (
           <p className="text-sm text-amber-700/80">Loading…</p>
         ) : error ? (
@@ -212,7 +213,7 @@ export function ExpenseWidget({ maximized, onMinimize, onMaximize }: ExpenseWidg
             {hint && <p className="text-xs text-slate-500 mt-2">{hint}</p>}
           </div>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="space-y-1.5 max-h-[180px] overflow-auto">
             {preview.map((e) => (
               <li
                 key={e.id}

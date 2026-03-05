@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { WidgetWrapper } from "../../components/WidgetWrapper";
+import { IconReceipt } from "../../components/WidgetIcons";
 import { Modal } from "../../components/Modal";
 import { apiFetch, notify } from "../../lib/electronApi";
 import type { ScrapedVoucherItem, ScrapedVoucherDetail } from "./types";
@@ -290,7 +291,7 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
 
   return (
     <>
-      <WidgetWrapper title="Vouchers" variant="ticket" onMaximize={onMaximize} minHeight={false}>
+      <WidgetWrapper title="Vouchers" variant="ticket" icon={<IconReceipt />} onMaximize={onMaximize} minHeight={false}>
         {loading ? (
           <p className="text-muted">Loading…</p>
         ) : error ? (
@@ -301,7 +302,7 @@ export function VouchersWidget({ maximized, onMinimize, onMaximize }: VouchersWi
             {hint && <p className="text-muted text-xs mt-2">{hint}</p>}
           </div>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="space-y-1.5 max-h-[180px] overflow-auto">
             {preview.map((v) => (
               <li
                 key={v.id}

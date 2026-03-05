@@ -10,9 +10,12 @@ export type WidgetId =
   | "notes"
   | "trips"
   | "shortcuts"
-  | "custom-fields"
   | "prs"
   | "vouchers"
+  | "vendor-advance"
+  | "employee-settlements"
+  | "vendor-settlements"
+  | "transfers-accounts"
   | "emails"
   | "whatsapp"
   | "calendar"
@@ -25,9 +28,12 @@ export const WIDGET_IDS: WidgetId[] = [
   "notes",
   "trips",
   "shortcuts",
-  "custom-fields",
   "prs",
   "vouchers",
+  "vendor-advance",
+  "employee-settlements",
+  "vendor-settlements",
+  "transfers-accounts",
   "emails",
   "whatsapp",
   "calendar",

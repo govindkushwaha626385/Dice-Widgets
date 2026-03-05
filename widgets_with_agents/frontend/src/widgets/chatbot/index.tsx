@@ -17,7 +17,12 @@ function buildMessagesForApi(messages: Message[]): { role: string; content: stri
   });
 }
 
-export function ChatbotWidget() {
+interface ChatbotWidgetProps {
+  /** When true, render only chat content (no card wrapper); used in floating panel. */
+  floating?: boolean;
+}
+
+export function ChatbotWidget({ floating }: ChatbotWidgetProps = {}) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -86,15 +91,10 @@ export function ChatbotWidget() {
     }
   }
 
-  return (
-    <WidgetWrapper
-      title="Chatbot"
-      variant="chat"
-      className="min-h-[300px] shadow-xl shadow-slate-900/10"
-    >
-      <ThemeProvider>
-        <div className="flex flex-col min-h-[260px]">
-          <div className="flex-1 overflow-auto space-y-4 mb-4 pr-1">
+  const content = (
+    <ThemeProvider>
+      <div className="flex flex-col h-full min-h-0">
+        <div className="flex-1 min-h-0 overflow-auto space-y-4 mb-4 pr-1 px-2">
             {messages.map((msg, i) => (
               <div key={i} className={msg.role === "user" ? "flex justify-end" : "flex justify-start"}>
                 {msg.role === "user" ? (
@@ -103,7 +103,7 @@ export function ChatbotWidget() {
                   </div>
                 ) : "c1Content" in msg && msg.c1Content != null ? (
                   <div className="rounded-2xl rounded-tl-md bg-slate-800/90 border border-slate-600/50 p-3 text-left max-w-[95%] overflow-auto">
-                    <C1Component c1Response={msg.c1Content} />
+                    <C1Component c1Response={typeof msg.c1Content === "string" ? msg.c1Content : JSON.stringify(msg.c1Content)} />
                   </div>
                 ) : (
                   <div className="rounded-2xl rounded-tl-md px-4 py-2.5 text-sm max-w-[88%] shadow-md bg-slate-700/90 text-slate-100 border border-slate-600/50">
@@ -143,6 +143,23 @@ export function ChatbotWidget() {
           </div>
         </div>
       </ThemeProvider>
+  );
+
+  if (floating) {
+    return (
+      <div className="flex flex-col h-full min-h-0 bg-slate-900/50 rounded-b-2xl overflow-hidden">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <WidgetWrapper
+      title="Chatbot"
+      variant="chat"
+      className="h-full min-h-0 shadow-xl shadow-slate-900/10"
+    >
+      {content}
     </WidgetWrapper>
   );
 }
