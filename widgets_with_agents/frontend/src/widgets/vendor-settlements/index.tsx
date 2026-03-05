@@ -181,14 +181,15 @@ export function VendorSettlementsWidget({
 
   const handleHoldSubmit = useCallback(async () => {
     const item = holdItem;
-    if (!item) return;
+    const remark = holdRemark.trim();
+    if (!item || !remark) return;
     setActionLoading(item.ledgerId);
     setActionError(null);
     try {
       const res = await apiFetch(getHoldUrl(item.ledgerId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ remark: holdRemark.trim() || undefined }),
+        body: JSON.stringify({ remark }),
       });
       const data = (await res.json()) as { success?: boolean; message?: string; error?: string };
       if (res.ok && data.success !== false) {
@@ -333,18 +334,22 @@ export function VendorSettlementsWidget({
           )}
         </Modal>
 
-        <Modal open={!!holdItem} onClose={closeHold} title="Hold">
+        <Modal open={!!holdItem} onClose={closeHold} title="Confirm Hold">
           {holdItem && (
             <div className="space-y-4">
-              <p className="text-slate-600 text-sm">Enter a remark for putting this settlement on hold.</p>
+              <p className="text-slate-600 text-sm">Put this settlement on hold? Enter a remark (required) and confirm.</p>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 p-2 text-sm">
+                <span className="font-mono text-xs text-slate-600">{holdItem.ledgerId}</span>
+                <span className="block font-medium text-slate-800">{holdItem.vendorName}</span>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Remark</label>
-                <textarea value={holdRemark} onChange={(e) => setHoldRemark(e.target.value)} placeholder="Remark (required)" rows={3} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Remark (required)</label>
+                <textarea value={holdRemark} onChange={(e) => setHoldRemark(e.target.value)} placeholder="Enter reason for hold…" rows={3} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
               </div>
               {actionError && <p className="text-red-600 text-xs">{actionError}</p>}
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={closeHold} className="rounded-lg border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">Cancel</button>
-                <button type="button" onClick={handleHoldSubmit} disabled={!!actionLoading} className="rounded-lg bg-red-600 text-white px-3 py-1.5 font-medium hover:bg-red-700 disabled:opacity-50">{actionLoading === holdItem.ledgerId ? "…" : "Hold"}</button>
+                <button type="button" onClick={handleHoldSubmit} disabled={!!actionLoading || !holdRemark.trim()} className="rounded-lg bg-red-600 text-white px-3 py-1.5 font-medium hover:bg-red-700 disabled:opacity-50">{actionLoading === holdItem.ledgerId ? "…" : "Confirm Hold"}</button>
               </div>
             </div>
           )}
@@ -427,18 +432,22 @@ export function VendorSettlementsWidget({
         )}
       </Modal>
 
-      <Modal open={!!holdItem} onClose={closeHold} title="Hold">
+      <Modal open={!!holdItem} onClose={closeHold} title="Confirm Hold">
         {holdItem && (
           <div className="space-y-4">
-            <p className="text-slate-600 text-sm">Enter a remark for putting this settlement on hold.</p>
+            <p className="text-slate-600 text-sm">Put this settlement on hold? Enter a remark (required) and confirm.</p>
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-2 text-sm">
+              <span className="font-mono text-xs text-slate-600">{holdItem.ledgerId}</span>
+              <span className="block font-medium text-slate-800">{holdItem.vendorName}</span>
+            </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Remark</label>
-              <textarea value={holdRemark} onChange={(e) => setHoldRemark(e.target.value)} placeholder="Remark (required)" rows={3} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Remark (required)</label>
+              <textarea value={holdRemark} onChange={(e) => setHoldRemark(e.target.value)} placeholder="Enter reason for hold…" rows={3} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
             </div>
             {actionError && <p className="text-red-600 text-xs">{actionError}</p>}
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={closeHold} className="rounded-lg border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">Cancel</button>
-              <button type="button" onClick={handleHoldSubmit} disabled={!!actionLoading} className="rounded-lg bg-red-600 text-white px-3 py-1.5 font-medium hover:bg-red-700 disabled:opacity-50">{actionLoading === holdItem.ledgerId ? "…" : "Hold"}</button>
+              <button type="button" onClick={handleHoldSubmit} disabled={!!actionLoading || !holdRemark.trim()} className="rounded-lg bg-red-600 text-white px-3 py-1.5 font-medium hover:bg-red-700 disabled:opacity-50">{actionLoading === holdItem.ledgerId ? "…" : "Confirm Hold"}</button>
             </div>
           </div>
         )}

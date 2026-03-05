@@ -60,8 +60,8 @@ function buildHeaders(): Record<string, string> {
   return headers;
 }
 
-/** Hold endpoint uses "hold." (trailing dot) per Heimdall API. */
-const HOLD_SEGMENT = "hold.";
+/** Hold endpoint: POST .../settlements/{ledgerId}/hold with body { remark }. */
+const HOLD_SEGMENT = "hold";
 
 /** Base path for employee settlements (default). */
 function settlementPath(ledgerId: string, action: "log.ledger" | "payout.ledger" | "hold"): string {

@@ -113,7 +113,7 @@ vendorSettlementsRoutes.post(
   }
 );
 
-// POST /api/widgets/vendor-settlements/:ledgerId/hold — Hold (body: { remark })
+// POST /api/widgets/vendor-settlements/:ledgerId/hold — Hold (body: { remark } required)
 vendorSettlementsRoutes.post(
   "/widgets/vendor-settlements/:ledgerId/hold",
   async (req: Request, res: Response) => {
@@ -123,6 +123,10 @@ vendorSettlementsRoutes.post(
       return;
     }
     const remark = typeof req.body?.remark === "string" ? req.body.remark.trim() : "";
+    if (!remark) {
+      res.status(400).json({ error: "Remark is required for hold" });
+      return;
+    }
     const body = { remark };
     try {
       const result = await heimdallVendorSettlementHold(ledgerId, body);
