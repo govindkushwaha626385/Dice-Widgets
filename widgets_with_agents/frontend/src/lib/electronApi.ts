@@ -6,6 +6,9 @@
 export const isElectron =
   typeof window !== "undefined" && !!window.electronAPI;
 
+/** Request timeout for widget list/detail (backend scrapers use 150s). */
+const API_REQUEST_TIMEOUT_MS = 160_000;
+
 /** Fetch API: via IPC in Electron (main calls backend), or direct fetch in browser. */
 export async function apiFetch(
   path: string,
@@ -13,11 +16,28 @@ export async function apiFetch(
 ): Promise<Response> {
   if (isElectron && window.electronAPI) {
     const { method = "GET", body } = options;
-    const result = await window.electronAPI.invoke("api", {
+    const apiPromise = window.electronAPI.invoke("api", {
       path,
       method,
       body: body != null ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined,
-    }) as { ok: boolean; status: number; data: unknown };
+    }) as Promise<{ ok: boolean; status: number; data: unknown }>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(
+        () => reject(new Error("Request timed out. Check your connection and try again.")),
+        API_REQUEST_TIMEOUT_MS
+      );
+    });
+    let result: { ok: boolean; status: number; data: unknown };
+    try {
+      result = await Promise.race([apiPromise, timeoutPromise]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Request failed.";
+      const blob = new Blob(
+        [JSON.stringify({ error: "timeout", hint: msg })],
+        { type: "application/json" }
+      );
+      return new Response(blob, { status: 504, statusText: "Gateway Timeout" });
+    }
     const data = result.data as Record<string, unknown> | string;
     const blob = new Blob([typeof data === "string" ? data : JSON.stringify(data)], {
       type: "application/json",

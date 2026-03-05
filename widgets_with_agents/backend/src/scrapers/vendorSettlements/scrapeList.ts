@@ -15,7 +15,7 @@ export interface ScrapedVendorSettlementItem {
   amount: string;
 }
 
-const GOTO_TIMEOUT_MS = 60000;
+const GOTO_TIMEOUT_MS = 90_000; // allow slow corporate.dice.tech
 const PAGINATION_WAIT_MS = 1500;
 
 /** Extract only a valid LEDGER-* id; never return description or other text. */

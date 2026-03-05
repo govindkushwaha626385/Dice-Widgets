@@ -21,7 +21,7 @@ const MOCK_ITEMS = [
   { ledgerId: "LEDGER-INTERN-000000714", vendorName: "Vendor Three", description: "Sample", type: "POADVANCE", date: "03 Mar 2026", amount: "INR 800" },
 ];
 
-const SCRAPER_TIMEOUT_MS = 90_000; // 90s so list + pagination can complete
+const SCRAPER_TIMEOUT_MS = 150_000; // 2.5 min — scraping can be slow on corporate.dice.tech
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([

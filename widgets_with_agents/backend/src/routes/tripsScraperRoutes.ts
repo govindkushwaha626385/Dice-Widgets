@@ -7,30 +7,42 @@ import { Router, type Request, type Response } from "express";
 import { runTripsListScraper, runTripDetailScraper } from "../scrapers/trips/index.js";
 import { heimdallDeleteTrip } from "../services/heimdallTripApi.js";
 import { getDiceAuthStatePath } from "../config/diceAuthPath.js";
+import { runWithRetry } from "../lib/runWithRetry.js";
 
 export const tripsScraperRoutes = Router();
+
+const SCRAPER_TIMEOUT_MS = 150_000; // 2.5 min — scraping can be slow on corporate.dice.tech
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
+}
 
 // GET /api/widgets/trips — list all trips (scraped, with pagination)
 tripsScraperRoutes.get("/widgets/trips", async (_req: Request, res: Response) => {
   try {
-    const items = await runTripsListScraper();
+    const items = await withTimeout(
+      runWithRetry(() => runTripsListScraper()),
+      SCRAPER_TIMEOUT_MS,
+      "Trips scraper"
+    );
     const hint =
       items.length === 0 && !getDiceAuthStatePath()
         ? "No trips found. Sign in to Dice in the app to scrape trips."
-        : undefined;
+        : items.length === 0
+          ? "No trips on this page, or the page took too long. Check connection and Dice auth, then refresh."
+          : undefined;
     res.json({ items, hint });
   } catch (err) {
-    const isTimeout =
-      err instanceof Error && (err.name === "TimeoutError" || /timeout/i.test(err.message));
     console.error("Trips list scraper error:", err);
-    if (isTimeout) {
-      res.status(200).json({
-        items: [],
-        hint: "The trips page took too long to load. Check your connection and Dice auth.",
-      });
-      return;
-    }
-    res.status(500).json({ error: "Failed to fetch trips" });
+    res.status(200).json({
+      items: [],
+      hint: "Could not load trips (timeout or connection). Check your connection and that you're signed in to Dice, then refresh.",
+    });
   }
 });
 

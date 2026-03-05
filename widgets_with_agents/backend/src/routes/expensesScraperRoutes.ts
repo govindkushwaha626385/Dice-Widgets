@@ -1,29 +1,41 @@
 import { Router, type Request, type Response } from "express";
 import { runExpensesListScraper, runExpenseDetailScraper } from "../scrapers/expenses/index.js";
+import { getDiceAuthStatePath } from "../config/diceAuthPath.js";
+import { runWithRetry } from "../lib/runWithRetry.js";
 
 export const expensesScraperRoutes = Router();
 
+const SCRAPER_TIMEOUT_MS = 150_000; // 2.5 min — scraping can be slow on corporate.dice.tech
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
+}
+
 expensesScraperRoutes.get("/widgets/expenses", async (_req: Request, res: Response) => {
   try {
-    const items = await runExpensesListScraper();
+    const items = await withTimeout(
+      runWithRetry(() => runExpensesListScraper()),
+      SCRAPER_TIMEOUT_MS,
+      "Expenses scraper"
+    );
     const hint =
-      items.length === 0 && !process.env.DICE_AUTH_STATE_PATH
-        ? "No rows found. The transaction site may require login — set DICE_AUTH_STATE_PATH in backend/.env (see backend/src/scrapers/expenses/README.md)."
-        : undefined;
+      items.length === 0 && !getDiceAuthStatePath()
+        ? "No expenses found. Sign in to Dice in the app to scrape."
+        : items.length === 0
+          ? "No expenses on this page, or the page took too long. Check connection and Dice auth, then refresh."
+          : undefined;
     res.json({ items, hint });
   } catch (err) {
-    const isTimeout =
-      err instanceof Error && (err.name === "TimeoutError" || /timeout/i.test(err.message));
     console.error("Expenses list scraper error:", err);
-    if (isTimeout) {
-      res.status(200).json({
-        items: [],
-        hint:
-          "The transaction page took too long to load. Check your connection and that auth is set up (DICE_AUTH_STATE_PATH).",
-      });
-      return;
-    }
-    res.status(500).json({ error: "Failed to fetch expenses" });
+    res.status(200).json({
+      items: [],
+      hint: "Could not load expenses (timeout or connection). Check your connection and that you're signed in to Dice, then refresh.",
+    });
   }
 });
 

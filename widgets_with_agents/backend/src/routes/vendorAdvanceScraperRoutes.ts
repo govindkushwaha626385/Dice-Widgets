@@ -10,30 +10,42 @@ import {
 } from "../scrapers/vendorAdvance/index.js";
 import { heimdallVendorAdvanceApprove, heimdallVendorAdvanceDecline } from "../services/heimdallVendorAdvanceApi.js";
 import { getDiceAuthStatePath } from "../config/diceAuthPath.js";
+import { runWithRetry } from "../lib/runWithRetry.js";
 
 export const vendorAdvanceScraperRoutes = Router();
+
+const SCRAPER_TIMEOUT_MS = 150_000; // 2.5 min — scraping can be slow on corporate.dice.tech
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
+}
 
 // GET /api/widgets/vendor-advances — list all vendor advances (scraped, with pagination)
 vendorAdvanceScraperRoutes.get("/widgets/vendor-advances", async (_req: Request, res: Response) => {
   try {
-    const items = await runVendorAdvancesListScraper();
+    const items = await withTimeout(
+      runWithRetry(() => runVendorAdvancesListScraper()),
+      SCRAPER_TIMEOUT_MS,
+      "Vendor advances scraper"
+    );
     const hint =
       items.length === 0 && !getDiceAuthStatePath()
         ? "No vendor advances found. Sign in to Dice in the app to scrape."
-        : undefined;
+        : items.length === 0
+          ? "No vendor advances on this page, or the page took too long. Check connection and Dice auth, then refresh."
+          : undefined;
     res.json({ items, hint });
   } catch (err) {
-    const isTimeout =
-      err instanceof Error && (err.name === "TimeoutError" || /timeout/i.test(err.message));
     console.error("Vendor advances list scraper error:", err);
-    if (isTimeout) {
-      res.status(200).json({
-        items: [],
-        hint: "The vendor advance page took too long to load. Check your connection and Dice auth.",
-      });
-      return;
-    }
-    res.status(500).json({ error: "Failed to fetch vendor advances" });
+    res.status(200).json({
+      items: [],
+      hint: "Could not load vendor advances (timeout or connection). Check your connection and that you're signed in to Dice, then refresh.",
+    });
   }
 });
 

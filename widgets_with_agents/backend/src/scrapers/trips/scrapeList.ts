@@ -18,7 +18,7 @@ export interface ScrapedTripItem {
   dateDisplay: string;
 }
 
-const GOTO_TIMEOUT_MS = 60000;
+const GOTO_TIMEOUT_MS = 90_000; // allow slow corporate.dice.tech
 const PAGINATION_WAIT_MS = 1500;
 
 /** Extract TRIPS-INTERN-* or similar id from text */

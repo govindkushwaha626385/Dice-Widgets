@@ -7,30 +7,42 @@ import { Router, type Request, type Response } from "express";
 import { runVouchersListScraper, runVoucherDetailScraper } from "../scrapers/vouchers/index.js";
 import { heimdallApprove, heimdallDecline } from "../services/heimdallVoucherApi.js";
 import { getDiceAuthStatePath } from "../config/diceAuthPath.js";
+import { runWithRetry } from "../lib/runWithRetry.js";
 
 export const vouchersScraperRoutes = Router();
+
+const SCRAPER_TIMEOUT_MS = 150_000; // 2.5 min — scraping can be slow on corporate.dice.tech
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
+}
 
 // GET /api/widgets/vouchers — list vouchers (scraped)
 vouchersScraperRoutes.get("/widgets/vouchers", async (_req: Request, res: Response) => {
   try {
-    const items = await runVouchersListScraper();
+    const items = await withTimeout(
+      runWithRetry(() => runVouchersListScraper()),
+      SCRAPER_TIMEOUT_MS,
+      "Vouchers scraper"
+    );
     const hint =
       items.length === 0 && !getDiceAuthStatePath()
         ? "No vouchers found. Sign in to Dice in the app to scrape expense vouchers."
-        : undefined;
+        : items.length === 0
+          ? "No vouchers on this page, or the page took too long. Check connection and Dice auth, then refresh."
+          : undefined;
     res.json({ items, hint });
   } catch (err) {
-    const isTimeout =
-      err instanceof Error && (err.name === "TimeoutError" || /timeout/i.test(err.message));
     console.error("Vouchers list scraper error:", err);
-    if (isTimeout) {
-      res.status(200).json({
-        items: [],
-        hint: "The vouchers page took too long to load. Check your connection and Dice auth.",
-      });
-      return;
-    }
-    res.status(500).json({ error: "Failed to fetch vouchers" });
+    res.status(200).json({
+      items: [],
+      hint: "Could not load vouchers (timeout or connection). Check your connection and that you're signed in to Dice, then refresh.",
+    });
   }
 });
 

@@ -24,7 +24,7 @@ function extractId(s: string | undefined | null): string {
   return id;
 }
 
-const GOTO_TIMEOUT_MS = 60000;
+const GOTO_TIMEOUT_MS = 90_000; // allow slow corporate.dice.tech
 
 export async function scrapeExpensesList(page: Page, listUrl: string): Promise<ScrapedExpenseItem[]> {
   await page.goto(listUrl, { waitUntil: "commit", timeout: GOTO_TIMEOUT_MS });

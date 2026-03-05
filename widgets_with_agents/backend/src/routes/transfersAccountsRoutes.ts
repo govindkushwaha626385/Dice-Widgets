@@ -7,10 +7,11 @@ import { Router, type Request, type Response } from "express";
 import { heimdallRecallTransfer } from "../services/heimdallTransfersApi.js";
 import { runPayoutListScraper } from "../scrapers/payout/index.js";
 import { getDiceAuthStatePath } from "../config/diceAuthPath.js";
+import { runWithRetry } from "../lib/runWithRetry.js";
 
 export const transfersAccountsRoutes = Router();
 
-const SCRAPER_TIMEOUT_MS = 90_000;
+const SCRAPER_TIMEOUT_MS = 150_000; // 2.5 min — scraping can be slow on corporate.dice.tech
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
@@ -25,7 +26,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 transfersAccountsRoutes.get("/widgets/transfers-accounts", async (_req: Request, res: Response) => {
   try {
     const items = await withTimeout(
-      runPayoutListScraper(),
+      runWithRetry(() => runPayoutListScraper()),
       SCRAPER_TIMEOUT_MS,
       "Transfers & Accounts scraper"
     );
